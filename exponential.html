@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Horizon Labs — Exponential Curve Fitting</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: #f5f7fb;
+      color: #1f2937;
+      display: flex;
+      justify-content: center;
+      padding: 40px 15px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      padding: 30px;
+    }
+
+    .brand { margin-bottom: 25px; }
+
+    .brand h1 { font-size: 26px; font-weight: 700; }
+
+    .brand span { font-size: 13px; color: #6b7280; }
+
+    h2 { font-size: 20px; margin-bottom: 18px; }
+
+    label { font-size: 14px; font-weight: 500; }
+
+    select {
+      width: 100%;
+      margin-top: 6px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    #points {
+      margin-top: 18px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 15px;
+      max-height: 260px;
+      overflow-y: auto;
+      background: #fafafa;
+      font-size: 14px;
+    }
+
+    #points input {
+      width: 70px;
+      padding: 6px;
+      margin: 4px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      text-align: center;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover { background: #1d4ed8; }
+
+    #result {
+      margin-top: 22px;
+      background: #f1f5f9;
+      border-radius: 10px;
+      padding: 16px;
+      white-space: pre-line;
+      font-size: 14px;
+    }
+
+    #steps {
+      margin-top: 15px;
+      background: #0f172a;
+      color: #e5e7eb;
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 13px;
+      white-space: pre-line;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    footer {
+      margin-top: 25px;
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="brand">
+    <h1>Horizon Labs</h1>
+    <span>Scientific Computing Tools</span>
+  </div>
+
+  <h2>Exponential Curve Fitting (Least Squares)</h2>
+
+  <label>Choose Form:</label>
+  <select id="formType">
+    <option value="exp">y = a·e^(bx)</option>
+    <option value="power">y = a·b^x</option>
+  </select>
+
+  <div id="points"></div>
+
+  <button onclick="solve()">Compute Best-Fit Curve</button>
+
+  <div id="result"></div>
+  <div id="steps"></div>
+
+  <footer>© Horizon Labs — Precision Mathematical Tools</footer>
+
+</div>
+
+<script>
+let total = 10;
+let container = document.getElementById("points");
+
+for (let i = 1; i <= total; i++) {
+  container.innerHTML += `(${i}) x:<input id="x${i}"> y:<input id="y${i}"><br>`;
+}
+
+function solve() {
+
+  let Sx=0, SY=0, SxY=0, Sx2=0;
+  let n = 0;
+
+  for (let i = 1; i <= total; i++) {
+
+    let xVal = document.getElementById("x"+i).value.trim();
+    let yVal = document.getElementById("y"+i).value.trim();
+
+    if (xVal === "" || yVal === "") continue;
+
+    let x = Number(xVal);
+    let y = Number(yVal);
+
+    if (isNaN(x) || isNaN(y) || y <= 0) continue;
+
+    let Y = Math.log(y);
+
+    Sx += x;
+    SY += Y;
+    SxY += x * Y;
+    Sx2 += x * x;
+    n++;
+  }
+
+  if (n < 2) {
+    result.innerText = "Need at least 2 valid positive points.";
+    steps.innerText = "";
+    return;
+  }
+
+  let b = (n*SxY - Sx*SY) / (n*Sx2 - Sx*Sx);
+  let A = (SY - b*Sx) / n;
+  let a = Math.exp(A);
+
+  let type = formType.value;
+  let equationText = "";
+
+  if (type === "exp") {
+    equationText = `y = ${a.toFixed(6)} · e^(${b.toFixed(6)}x)`;
+  } else {
+    let base = Math.exp(b);
+    equationText = `y = ${a.toFixed(6)} · (${base.toFixed(6)})^x`;
+  }
+
+  result.innerText =
+`Best-fit exponential curve:
+
+${equationText}`;
+
+  steps.innerText =
+`STEP 1 — Valid data points
+n = ${n}
+
+STEP 2 — Log transformation
+Assume y = a·e^(bx)
+Taking natural log:
+Y = ln(y) = A + bx   where A = ln(a)
+
+STEP 3 — Required summations
+Σx = ${Sx.toFixed(6)}
+ΣY = ${SY.toFixed(6)}
+ΣxY = ${SxY.toFixed(6)}
+Σx² = ${Sx2.toFixed(6)}
+
+STEP 4 — Normal equations for straight line fit
+ΣY  = nA + bΣx
+ΣxY = AΣx + bΣx²
+
+Substituting values:
+
+${SY.toFixed(6)} = ${n}A + ${Sx.toFixed(6)}b
+${SxY.toFixed(6)} = ${Sx.toFixed(6)}A + ${Sx2.toFixed(6)}b
+
+STEP 5 — Solving using least-squares formulas
+b = ${b.toFixed(6)}
+A = ${A.toFixed(6)}
+
+STEP 6 — Back substitution
+a = e^A = ${a.toFixed(6)}
+
+If written as y = a·b^x:
+b(base) = e^b = ${(Math.exp(b)).toFixed(6)}
+
+✔ Exponential least-squares curve successfully obtained.`;
+}
+</script>
+
+</body>
+</html>

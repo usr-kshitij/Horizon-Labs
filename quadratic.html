@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Horizon Labs — Quadratic Curve Fitting</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: #f5f7fb;
+      color: #1f2937;
+      display: flex;
+      justify-content: center;
+      padding: 40px 15px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      padding: 30px;
+    }
+
+    /* ---------- BRAND HEADER ---------- */
+    .brand {
+      margin-bottom: 25px;
+    }
+
+    .brand h1 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .brand span {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-bottom: 18px;
+      font-weight: 600;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    select {
+      width: 100%;
+      margin-top: 6px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    #points {
+      margin-top: 18px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 15px;
+      max-height: 260px;
+      overflow-y: auto;
+      background: #fafafa;
+      font-size: 14px;
+    }
+
+    #points input {
+      width: 70px;
+      padding: 6px;
+      margin: 4px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      text-align: center;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    #result {
+      margin-top: 22px;
+      background: #f1f5f9;
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-line;
+    }
+
+    #steps {
+      margin-top: 15px;
+      background: #0f172a;
+      color: #e5e7eb;
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-line;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    footer {
+      margin-top: 25px;
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="brand">
+    <h1>Horizon Labs</h1>
+    <span>Scientific Computing Tools</span>
+  </div>
+
+  <h2>Quadratic Curve Fitting (Least Squares)</h2>
+
+  <label>Choose Equation Form:</label>
+  <select id="formType">
+    <option value="ax2bxcc">y = ax² + bx + c</option>
+    <option value="abxcx2">y = a + bx + cx²</option>
+  </select>
+
+  <div id="points"></div>
+
+  <button onclick="solve()">Compute Best-Fit Curve</button>
+
+  <div id="result"></div>
+  <div id="steps"></div>
+
+  <footer>© Horizon Labs — Precision Mathematical Tools</footer>
+
+</div>
+
+<script>
+let container = document.getElementById("points");
+
+for (let i = 1; i <= 12; i++) {
+  container.innerHTML += `(${i}) x:<input id="x${i}"> y:<input id="y${i}"><br>`;
+}
+
+function solve() {
+
+  let Sx=0, Sy=0, Sx2=0, Sx3=0, Sx4=0, Sxy=0, Sx2y=0;
+  let n = 0;
+
+  for (let i = 1; i <= 12; i++) {
+
+    let xVal = document.getElementById("x"+i).value.trim();
+    let yVal = document.getElementById("y"+i).value.trim();
+
+    if (xVal === "" || yVal === "") continue;
+
+    let x = Number(xVal);
+    let y = Number(yVal);
+
+    if (isNaN(x) || isNaN(y)) continue;
+
+    n++;
+
+    Sx += x;
+    Sy += y;
+    Sx2 += x*x;
+    Sx3 += x*x*x;
+    Sx4 += x*x*x*x;
+    Sxy += x*y;
+    Sx2y += x*x*y;
+  }
+
+  if (n < 3) {
+    result.innerText = "Need at least 3 valid points.";
+    steps.innerText = "";
+    return;
+  }
+
+  let D =
+      n*(Sx2*Sx4 - Sx3*Sx3)
+    - Sx*(Sx*Sx4 - Sx2*Sx3)
+    + Sx2*(Sx*Sx3 - Sx2*Sx2);
+
+  if (D === 0) {
+    result.innerText = "Cannot fit parabola (singular data).";
+    steps.innerText = "";
+    return;
+  }
+
+  let Da =
+      Sy*(Sx2*Sx4 - Sx3*Sx3)
+    - Sx*(Sxy*Sx4 - Sx3*Sx2y)
+    + Sx2*(Sxy*Sx3 - Sx2*Sx2y);
+
+  let Db =
+      n*(Sxy*Sx4 - Sx3*Sx2y)
+    - Sy*(Sx*Sx4 - Sx2*Sx3)
+    + Sx2*(Sx*Sx2y - Sxy*Sx2);
+
+  let Dc =
+      n*(Sx2*Sx2y - Sxy*Sx3)
+    - Sx*(Sx*Sx2y - Sxy*Sx2)
+    + Sy*(Sx*Sx3 - Sx2*Sx2);
+
+  let a = Da / D;
+  let b = Db / D;
+  let c = Dc / D;
+
+  let type = formType.value;
+
+  let equationText =
+    type === "ax2bxcc"
+      ? `y = ${a.toFixed(6)}x² + ${b.toFixed(6)}x + ${c.toFixed(6)}`
+      : `y = ${c.toFixed(6)} + ${b.toFixed(6)}x + ${a.toFixed(6)}x²`;
+
+  let h = -b / (2 * a);
+  let k = c - (b*b)/(4*a);
+
+  result.innerText =
+`Best-fit quadratic:
+
+${equationText}
+
+Vertex form:
+y = ${a.toFixed(6)}(x − ${h.toFixed(6)})² + ${k.toFixed(6)}`;
+
+  steps.innerText =
+`STEP 1 — Number of valid points
+n = ${n}
+
+STEP 2 — Required summations
+Σx = ${Sx}
+Σy = ${Sy}
+Σx² = ${Sx2}
+Σx³ = ${Sx3}
+Σx⁴ = ${Sx4}
+Σxy = ${Sxy}
+Σx²y = ${Sx2y}
+
+STEP 3 — Forming normal equations for quadratic fit
+
+Σy   = n·a + b·Σx + c·Σx²
+Σxy  = a·Σx + b·Σx² + c·Σx³
+Σx²y = a·Σx² + b·Σx³ + c·Σx⁴
+
+Substituting values:
+
+${Sy} = ${n}a + ${Sx}b + ${Sx2}c  
+${Sxy} = ${Sx}a + ${Sx2}b + ${Sx3}c  
+${Sx2y} = ${Sx2}a + ${Sx3}b + ${Sx4}c  
+
+STEP 4 — Determinants using Cramer's rule
+
+D  = ${D}
+Da = ${Da}
+Db = ${Db}
+Dc = ${Dc}
+
+STEP 5 — Coefficients of best-fit parabola
+
+a = ${a.toFixed(6)}
+b = ${b.toFixed(6)}
+c = ${c.toFixed(6)}
+
+STEP 6 — Vertex of parabola
+
+h = ${h.toFixed(6)}
+k = ${k.toFixed(6)}
+
+✔ Quadratic least-squares curve successfully obtained.`;
+}
+</script>
+
+</body>
+</html>

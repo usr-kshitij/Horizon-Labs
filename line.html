@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Horizon Labs — Straight Line Curve Fitting</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: #f5f7fb;
+      color: #1f2937;
+      display: flex;
+      justify-content: center;
+      padding: 40px 15px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      padding: 30px;
+    }
+
+    .brand { margin-bottom: 25px; }
+
+    .brand h1 { font-size: 26px; font-weight: 700; }
+
+    .brand span { font-size: 13px; color: #6b7280; }
+
+    h2 { font-size: 20px; margin-bottom: 18px; }
+
+    #points {
+      margin-top: 18px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 15px;
+      max-height: 260px;
+      overflow-y: auto;
+      background: #fafafa;
+      font-size: 14px;
+    }
+
+    #points input {
+      width: 70px;
+      padding: 6px;
+      margin: 4px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      text-align: center;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover { background: #1d4ed8; }
+
+    #result {
+      margin-top: 22px;
+      background: #f1f5f9;
+      border-radius: 10px;
+      padding: 16px;
+      white-space: pre-line;
+      font-size: 14px;
+    }
+
+    #steps {
+      margin-top: 15px;
+      background: #0f172a;
+      color: #e5e7eb;
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 13px;
+      white-space: pre-line;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    footer {
+      margin-top: 25px;
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="brand">
+    <h1>Horizon Labs</h1>
+    <span>Scientific Computing Tools</span>
+  </div>
+
+  <h2>Straight Line Curve Fitting (y = a + bx)</h2>
+
+  <div id="points"></div>
+
+  <button onclick="solve()">Compute Best-Fit Line</button>
+
+  <div id="result"></div>
+  <div id="steps"></div>
+
+  <footer>© Horizon Labs — Precision Mathematical Tools</footer>
+
+</div>
+
+<script>
+let container = document.getElementById("points");
+
+for (let i = 1; i <= 10; i++) {
+  container.innerHTML += `(${i}) x:<input id="x${i}"> y:<input id="y${i}"><br>`;
+}
+
+function det2(a, b, c, d) {
+  return a * d - b * c;
+}
+
+function solve() {
+
+  let n = 0, Sx = 0, Sy = 0, Sx2 = 0, Sxy = 0;
+
+  for (let i = 1; i <= 10; i++) {
+
+    let xVal = document.getElementById("x" + i).value.trim();
+    let yVal = document.getElementById("y" + i).value.trim();
+
+    if (xVal === "" || yVal === "") continue;
+
+    let x = Number(xVal);
+    let y = Number(yVal);
+
+    if (isNaN(x) || isNaN(y)) continue;
+
+    n++;
+    Sx += x;
+    Sy += y;
+    Sx2 += x * x;
+    Sxy += x * y;
+  }
+
+  if (n < 2) {
+    result.innerText = "Need at least 2 valid points.";
+    steps.innerText = "";
+    return;
+  }
+
+  let D  = det2(n, Sx, Sx, Sx2);
+  let Da = det2(Sy, Sx, Sxy, Sx2);
+  let Db = det2(n, Sy, Sx, Sxy);
+
+  if (D === 0) {
+    result.innerText = "Cannot fit line (vertical or identical x-values).";
+    steps.innerText = "";
+    return;
+  }
+
+  let a = Da / D;
+  let b = Db / D;
+
+  result.innerText =
+`Best-fit straight line:
+
+y = ${a.toFixed(6)} + ${b.toFixed(6)}x`;
+
+  steps.innerText =
+`STEP 1 — Valid data points
+n = ${n}
+
+STEP 2 — Required summations
+Σx  = ${Sx}
+Σy  = ${Sy}
+Σx² = ${Sx2}
+Σxy = ${Sxy}
+
+STEP 3 — Least-squares principle
+We fit y = a + bx by minimizing total squared error:
+
+S = Σ(y − a − bx)²
+
+Setting partial derivatives to zero:
+
+∂S/∂a = 0
+∂S/∂b = 0
+
+This gives the normal equations:
+
+na + bΣx = Σy
+aΣx + bΣx² = Σxy
+
+Substituting values:
+
+${n}a + ${Sx}b = ${Sy}
+${Sx}a + ${Sx2}b = ${Sxy}
+
+STEP 4 — Determinants (Cramer's rule)
+Δ  = ${D}
+Δa = ${Da}
+Δb = ${Db}
+
+STEP 5 — Coefficients of best-fit line
+a = ${a.toFixed(6)}
+b = ${b.toFixed(6)}
+
+✔ Straight-line least-squares fit successfully obtained.`;
+}
+</script>
+
+</body>
+</html>
