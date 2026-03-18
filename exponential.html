@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Horizon Labs — Exponential Curve Fitting</title>
+  <title>Horizon Labs — Curve Fitting Tool</title>
 
   <style>
     * {
@@ -123,12 +123,13 @@
     <span>Scientific Computing Tools</span>
   </div>
 
-  <h2>Exponential Curve Fitting (Least Squares)</h2>
+  <h2>Curve Fitting (Least Squares)</h2>
 
-  <label>Choose Form:</label>
+  <label>Choose Model:</label>
   <select id="formType">
     <option value="exp">y = a·e^(bx)</option>
     <option value="power">y = a·b^x</option>
+    <option value="powerlaw">y = a·x^b</option>
   </select>
 
   <div id="points"></div>
@@ -155,6 +156,8 @@ function solve() {
   let Sx=0, SY=0, SxY=0, Sx2=0;
   let n = 0;
 
+  let type = document.getElementById("formType").value;
+
   for (let i = 1; i <= total; i++) {
 
     let xVal = document.getElementById("x"+i).value.trim();
@@ -165,20 +168,30 @@ function solve() {
     let x = Number(xVal);
     let y = Number(yVal);
 
-    if (isNaN(x) || isNaN(y) || y <= 0) continue;
+    if (isNaN(x) || isNaN(y)) continue;
 
-    let Y = Math.log(y);
+    let X, Y;
 
-    Sx += x;
+    if (type === "powerlaw") {
+      if (x <= 0 || y <= 0) continue;
+      X = Math.log(x);
+      Y = Math.log(y);
+    } else {
+      if (y <= 0) continue;
+      X = x;
+      Y = Math.log(y);
+    }
+
+    Sx += X;
     SY += Y;
-    SxY += x * Y;
-    Sx2 += x * x;
+    SxY += X * Y;
+    Sx2 += X * X;
     n++;
   }
 
   if (n < 2) {
-    result.innerText = "Need at least 2 valid positive points.";
-    steps.innerText = "";
+    document.getElementById("result").innerText = "Need at least 2 valid points.";
+    document.getElementById("steps").innerText = "";
     return;
   }
 
@@ -186,56 +199,46 @@ function solve() {
   let A = (SY - b*Sx) / n;
   let a = Math.exp(A);
 
-  let type = formType.value;
   let equationText = "";
 
   if (type === "exp") {
     equationText = `y = ${a.toFixed(6)} · e^(${b.toFixed(6)}x)`;
-  } else {
+  }
+  else if (type === "power") {
     let base = Math.exp(b);
     equationText = `y = ${a.toFixed(6)} · (${base.toFixed(6)})^x`;
   }
+  else if (type === "powerlaw") {
+    equationText = `y = ${a.toFixed(6)} · x^(${b.toFixed(6)})`;
+  }
 
-  result.innerText =
-`Best-fit exponential curve:
+  document.getElementById("result").innerText =
+`Best-fit curve:
 
 ${equationText}`;
 
-  steps.innerText =
+  document.getElementById("steps").innerText =
 `STEP 1 — Valid data points
 n = ${n}
 
-STEP 2 — Log transformation
-Assume y = a·e^(bx)
-Taking natural log:
-Y = ln(y) = A + bx   where A = ln(a)
+STEP 2 — Transformation
+Exponential: Y = ln(y), X = x
+Power Law:   Y = ln(y), X = ln(x)
 
-STEP 3 — Required summations
-Σx = ${Sx.toFixed(6)}
+STEP 3 — Summations
+ΣX = ${Sx.toFixed(6)}
 ΣY = ${SY.toFixed(6)}
-ΣxY = ${SxY.toFixed(6)}
-Σx² = ${Sx2.toFixed(6)}
+ΣXY = ${SxY.toFixed(6)}
+ΣX² = ${Sx2.toFixed(6)}
 
-STEP 4 — Normal equations for straight line fit
-ΣY  = nA + bΣx
-ΣxY = AΣx + bΣx²
-
-Substituting values:
-
-${SY.toFixed(6)} = ${n}A + ${Sx.toFixed(6)}b
-${SxY.toFixed(6)} = ${Sx.toFixed(6)}A + ${Sx2.toFixed(6)}b
-
-STEP 5 — Solving using least-squares formulas
+STEP 4 — Least squares
 b = ${b.toFixed(6)}
 A = ${A.toFixed(6)}
 
-STEP 6 — Back substitution
+STEP 5 — Back substitution
 a = e^A = ${a.toFixed(6)}
 
-If written as y = a·b^x:
-b(base) = e^b = ${(Math.exp(b)).toFixed(6)}
-
-✔ Exponential least-squares curve successfully obtained.`;
+✔ Curve successfully fitted.`;
 }
 </script>
 
