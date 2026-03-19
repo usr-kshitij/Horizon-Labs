@@ -191,7 +191,7 @@ function solve() {
 
   if (n < 2) {
     document.getElementById("result").innerText = "Need at least 2 valid points.";
-    document.getElementById("steps").innerText = "";
+    document.getElementById("steps").innerHTML = "";
     return;
   }
 
@@ -217,7 +217,7 @@ function solve() {
 
 ${equationText}`;
 
-  document.getElementById("steps").innerText =
+  document.getElementById("steps").innerHTML =
 `STEP 1 — Valid data points
 n = ${n}
 
@@ -231,11 +231,19 @@ STEP 3 — Summations
 ΣXY = ${SxY.toFixed(6)}
 ΣX² = ${Sx2.toFixed(6)}
 
-STEP 4 — Least squares
+STEP 4 — Normal Equations
+
+ΣY = n·A + b·ΣX  
+${SY.toFixed(6)} = ${n}·A + ${Sx.toFixed(6)}·b
+
+ΣXY = A·ΣX + b·ΣX²  
+${SxY.toFixed(6)} = ${Sx.toFixed(6)}·A + ${Sx2.toFixed(6)}·b
+
+STEP 5 — Least squares
 b = ${b.toFixed(6)}
 A = ${A.toFixed(6)}
 
-STEP 5 — Back substitution
+STEP 6 — Back substitution
 a = e^A = ${a.toFixed(6)}
 
 ✔ Curve successfully fitted.`;
