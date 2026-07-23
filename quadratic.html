@@ -158,12 +158,16 @@
 
   <div id="result"></div>
   <div id="steps"></div>
+  <div style="margin-top:25px;">
+    <canvas id="graph" height="120"></canvas>
+</div>
 
   <footer>© Horizon Labs — Precision Mathematical Tools</footer>
 
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+let chart = null;
 let container = document.getElementById("points");
 
 for (let i = 1; i <= 12; i++) {
@@ -296,6 +300,121 @@ h = ${h.toFixed(6)}
 k = ${k.toFixed(6)}
 
 ✔ Quadratic least-squares curve successfully obtained.`;
+drawGraph(a, b, c);
+}
+function drawGraph(a, b, c) {
+
+    let scatter = [];
+    let curve = [];
+
+    let minX = Infinity;
+    let maxX = -Infinity;
+
+    for (let i = 1; i <= 12; i++) {
+
+        let xv = document.getElementById("x" + i).value.trim();
+        let yv = document.getElementById("y" + i).value.trim();
+
+        if (xv === "" || yv === "") continue;
+
+        let x = Number(xv);
+        let y = Number(yv);
+
+        if (isNaN(x) || isNaN(y)) continue;
+
+        scatter.push({ x: x, y: y });
+
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+    }
+
+    if (scatter.length < 3) return;
+
+    let step = (maxX - minX) / 100;
+
+    if (step === 0) step = 1;
+
+    for (let x = minX; x <= maxX; x += step) {
+
+        let y = a * x * x + b * x + c;
+
+        curve.push({
+            x: x,
+            y: y
+        });
+
+    }
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(document.getElementById("graph"), {
+
+        type: "scatter",
+
+        data: {
+
+            datasets: [
+
+                {
+                    label: "Observed Data",
+                    data: scatter,
+                    backgroundColor: "#2563eb",
+                    pointRadius: 5
+                },
+
+                {
+                    label: "Best-Fit Quadratic",
+                    data: curve,
+                    type: "line",
+                    borderColor: "#ef4444",
+                    borderWidth: 3,
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0.25
+                }
+
+            ]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            plugins: {
+
+                legend: {
+                    display: true
+                }
+
+            },
+
+            scales: {
+
+                x: {
+
+                    title: {
+                        display: true,
+                        text: "X"
+                    }
+
+                },
+
+                y: {
+
+                    title: {
+                        display: true,
+                        text: "Y"
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
+
 }
 </script>
 

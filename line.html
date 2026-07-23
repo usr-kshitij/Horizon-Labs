@@ -119,12 +119,16 @@
 
   <div id="result"></div>
   <div id="steps"></div>
+  <div style="margin-top:25px;">
+    <canvas id="graph" height="120"></canvas>
+</div>
 
   <footer>© Horizon Labs — Precision Mathematical Tools</footer>
 
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+let chart = null;
 let container = document.getElementById("points");
 
 for (let i = 1; i <= 10; i++) {
@@ -222,6 +226,115 @@ a = ${a.toFixed(6)}
 b = ${b.toFixed(6)}
 
 ✔ Straight-line least-squares fit successfully obtained.`;
+drawGraph(a, b);
+}
+function drawGraph(a, b) {
+
+    let scatter = [];
+    let line = [];
+
+    let minX = Infinity;
+    let maxX = -Infinity;
+
+    for (let i = 1; i <= 10; i++) {
+
+        let xv = document.getElementById("x"+i).value.trim();
+        let yv = document.getElementById("y"+i).value.trim();
+
+        if(xv==="" || yv==="") continue;
+
+        let x = Number(xv);
+        let y = Number(yv);
+
+        if(isNaN(x) || isNaN(y)) continue;
+
+        scatter.push({x:x, y:y});
+
+        if(x < minX) minX = x;
+        if(x > maxX) maxX = x;
+    }
+
+    if(scatter.length < 2) return;
+
+    line.push({
+        x: minX,
+        y: a + b * minX
+    });
+
+    line.push({
+        x: maxX,
+        y: a + b * maxX
+    });
+
+    if(chart) chart.destroy();
+
+    chart = new Chart(document.getElementById("graph"), {
+
+        type: "scatter",
+
+        data: {
+
+            datasets: [
+
+                {
+                    label: "Observed Data",
+                    data: scatter,
+                    backgroundColor: "#2563eb",
+                    pointRadius: 5
+                },
+
+                {
+                    label: "Best-Fit Line",
+                    data: line,
+                    type: "line",
+                    borderColor: "#ef4444",
+                    borderWidth: 3,
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0
+                }
+
+            ]
+        },
+
+        options: {
+
+            responsive: true,
+
+            plugins: {
+
+                legend: {
+                    display: true
+                }
+
+            },
+
+            scales: {
+
+                x: {
+
+                    title: {
+                        display: true,
+                        text: "X"
+                    }
+
+                },
+
+                y: {
+
+                    title: {
+                        display: true,
+                        text: "Y"
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
+
 }
 </script>
 
